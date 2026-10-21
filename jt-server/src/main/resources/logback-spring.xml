@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
+
+    <!--
+        原始报文单独一个文件，按天滚动，保留 7 天。
+        和业务日志分开：原始报文量大、格式固定，方便 grep，也方便以后用 Filebeat 之类的工具收走。
+        一行一条：时间 协议 设备号 方向 对端地址 十六进制
+    -->
+    <appender name="RAW" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/jt-raw.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/jt-raw.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>500MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>20GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 异步写，原始报文日志不能拖慢 IO 线程；队列满了直接丢弃，不阻塞 -->
+    <appender name="ASYNC_RAW" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="RAW"/>
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <logger name="iot.raw" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_RAW"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

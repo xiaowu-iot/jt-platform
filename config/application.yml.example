@@ -1,0 +1,21 @@
+# 复制成 config/application.yml 后修改（这个文件已在 .gitignore 里，不会被提交）
+# 从项目根目录启动时会自动加载：java -jar jt-server/target/jt-server.jar
+
+server:
+  port: 8080
+
+jt:
+  # 集群部署时每个进程只开一个角色，比如接入节点只写 access
+  roles: access,platform
+  access:
+    port: 7611               # 终端连接的 TCP 端口，防火墙 / 安全组要放行
+    idle-seconds: 180        # 超过这么久没收到数据判离线，心跳间隔的 3 倍
+    worker-threads: 0        # IO 线程数，0 表示 CPU 核数 × 2
+    command-timeout-seconds: 10
+    auto-register: true      # 档案里没有的终端注册时自动建档，生产环境建议关掉
+  demo:
+    enabled: true            # 首次启动生成演示车队、车辆和演示账号
+    simulator: true          # 内置模拟终端沿演示路线跑，接真机后关掉
+  map:
+    provider: amap
+    amap-web-key:            # 逆地理编码用的高德「Web 服务」key，不填只显示经纬度

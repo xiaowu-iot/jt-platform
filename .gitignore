@@ -1,0 +1,8 @@
+target/
+/data/
+.idea/
+*.iml
+.vscode/
+config/application.yml
+*.log
+/docs/standards/

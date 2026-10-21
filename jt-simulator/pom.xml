@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.xiaowuiot</groupId>
+        <artifactId>jt-platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>jt-simulator</artifactId>
+    <name>jt-simulator</name>
+    <description>车载终端模拟器与压测工具</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.xiaowuiot</groupId>
+            <artifactId>protocol-jt808</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>jt-simulator</finalName>
+        <plugins>
+            <!-- 打成一个可以直接 java -jar 运行的包 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>io.github.xiaowuiot.jt.simulator.SimulatorApplication</mainClass>
+                    <!-- 可执行包单独加 exec 后缀，原来的 jar 保持普通格式，服务端的集成测试要用里面的终端类 -->
+                    <classifier>exec</classifier>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
