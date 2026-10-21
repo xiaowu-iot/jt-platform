@@ -1,5 +1,7 @@
 package io.github.xiaowuiot.jt.server.system;
 
+import io.github.xiaowuiot.jt.server.audit.LoginLog;
+import io.github.xiaowuiot.jt.server.audit.LoginLogService;
 import io.github.xiaowuiot.jt.server.common.ApiException;
 import io.github.xiaowuiot.jt.server.config.JtProperties;
 import io.github.xiaowuiot.jt.server.security.CurrentUser;
@@ -40,9 +42,12 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final CurrentUser current;
     private final JtProperties props;
+    private final LoginLogService loginLog;
 
     public AuthController(AuthenticationManager authManager, SecurityContextRepository contextRepo, UserRepository users,
-                          PasswordEncoder encoder, CurrentUser current, JtProperties props) {
+                          PasswordEncoder encoder, CurrentUser current, JtProperties props,
+                          LoginLogService loginLog) {
+        this.loginLog = loginLog;
         this.authManager = authManager;
         this.contextRepo = contextRepo;
         this.users = users;
@@ -82,12 +87,15 @@ public class AuthController {
     @Transactional(readOnly = true)
     public UserView login(@Valid @RequestBody LoginRequest body, HttpServletRequest req, HttpServletResponse resp) {
         Authentication auth;
+        String username = body.username().strip();
         try {
-            auth = authManager.authenticate(
-                    UsernamePasswordAuthenticationToken.unauthenticated(body.username().strip(), body.password()));
+            auth = authManager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(username, body.password()));
         } catch (DisabledException e) {
+            loginLog.record(users.findByUsername(username).orElse(null), username, LoginLog.Action.LOGIN_FAILED, "账号已停用", req);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "DISABLED", "账号已被停用，请联系系统管理员");
         } catch (AuthenticationException e) {
+            User u = users.findByUsername(username).orElse(null);
+            loginLog.record(u, username, LoginLog.Action.LOGIN_FAILED, u == null ? "用户名不存在" : "密码错误", req);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", "用户名或密码错误");
         }
         // 登录成功后换一个会话 ID，防止会话固定攻击
@@ -97,11 +105,17 @@ public class AuthController {
         ctx.setAuthentication(auth);
         SecurityContextHolder.setContext(ctx);
         contextRepo.saveContext(ctx, req, resp);
-        return UserView.of(users.findByUsername(body.username().strip()).orElseThrow());
+        User user = users.findByUsername(username).orElseThrow();
+        loginLog.record(user, username, LoginLog.Action.LOGIN, null, req);
+        return UserView.of(user);
     }
 
     @PostMapping("/logout")
     public Map<String, Boolean> logout(HttpServletRequest req) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            users.findByUsername(auth.getName()).ifPresent(u -> loginLog.record(u, u.getUsername(), LoginLog.Action.LOGOUT, null, req));
+        }
         if (req.getSession(false) != null) {
             req.getSession(false).invalidate();
         }

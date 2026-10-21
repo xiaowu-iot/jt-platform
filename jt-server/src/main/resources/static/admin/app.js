@@ -70,14 +70,15 @@
     { k: 'notify', t: '通知配置', ic: 'bell', g: '系统设置', p: 'NOTIFY_MANAGE' },
     { k: 'users', t: '用户管理', ic: 'user', g: '系统设置', p: 'SYSTEM_ADMIN' },
     { k: 'roles', t: '角色权限', ic: 'role', g: '系统设置', p: 'SYSTEM_ADMIN' },
+    { k: 'logins', t: '登录记录', ic: 'log', g: '系统设置', p: 'SYSTEM_ADMIN' },
   ];
   const COMPONENTS = { dashboard: 'Dashboard', monitor: 'Monitor', track: 'Track', alarms: 'Alarms', vehicles: 'Vehicles', devices: 'Devices', fleets: 'Fleets',
-    sessions: 'Sessions', commands: 'Commands', raw: 'Raw', notify: 'Notify', users: 'Users', roles: 'Roles' };
+    sessions: 'Sessions', commands: 'Commands', raw: 'Raw', notify: 'Notify', users: 'Users', roles: 'Roles', logins: 'LoginLogs' };
   const GROUPS = {
     '监控中心': { ic: 'monitor', d: '定位、轨迹与报警' },
     '车辆管理': { ic: 'truck', d: '车辆、车队与终端' },
     '指令调试': { ic: 'send', d: '指令下发与报文监视' },
-    '系统设置': { ic: 'gear', d: '通知、用户与权限' },
+    '系统设置': { ic: 'gear', d: '通知、用户、权限与登录记录' },
   };
 
   const App = {

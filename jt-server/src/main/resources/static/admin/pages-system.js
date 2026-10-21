@@ -162,5 +162,45 @@
     </div>`,
   };
 
-  Object.assign(JT.Pages, { Notify, Users, Roles });
+  // ===================== 登录记录（系统管理员） =====================
+  const LoginLogs = {
+    setup() {
+      const q = reactive({ keyword: '', action: '', range: null, page: 0, size: 20 });
+      const data = ref({ items: [], total: 0 });
+      const loading = ref(false);
+      async function load() {
+        loading.value = true;
+        try {
+          const p = { keyword: q.keyword, action: q.action, page: q.page, size: q.size };
+          if (q.range) { p.from = q.range[0]; p.to = q.range[1]; }
+          data.value = await api('/audit/logins?' + qs(p));
+        } catch (e) { fail(e); } finally { loading.value = false; }
+      }
+      function search() { q.page = 0; load(); }
+      onMounted(load);
+      const TAG = { LOGIN: 'success', LOGIN_FAILED: 'danger', LOGOUT: 'info' };
+      return { q, data, loading, load, search, fmt, TAG };
+    },
+    template: `<div class="panel">
+      <div class="muted" style="margin-bottom:10px">每次登录、登录失败和退出都会记一条：账号、时间、来源 IP、从哪个端登录、浏览器。记录保留 180 天。</div>
+      <div class="toolbar">
+        <el-input v-model="q.keyword" placeholder="账号、姓名或 IP" clearable style="width:200px" @keyup.enter="search"/>
+        <el-select v-model="q.action" placeholder="全部类型" clearable style="width:130px"><el-option label="登录成功" value="LOGIN"/><el-option label="登录失败" value="LOGIN_FAILED"/><el-option label="退出登录" value="LOGOUT"/></el-select>
+        <el-date-picker v-model="q.range" type="daterange" value-format="YYYY-MM-DD" start-placeholder="开始日期" end-placeholder="结束日期" style="width:260px"/>
+        <el-button type="primary" @click="search">查询</el-button>
+      </div>
+      <el-table :data="data.items" size="small" v-loading="loading">
+        <el-table-column label="时间" width="160"><template #default="{row}">{{ fmt(row.createdAt, true) }}</template></el-table-column>
+        <el-table-column label="账号" width="160"><template #default="{row}">{{ row.username }}<span v-if="row.name" class="muted"> · {{ row.name }}</span></template></el-table-column>
+        <el-table-column label="类型" width="100"><template #default="{row}"><el-tag size="small" :type="TAG[row.action]">{{ row.actionLabel }}</el-tag></template></el-table-column>
+        <el-table-column prop="message" label="说明" width="120"/>
+        <el-table-column prop="ip" label="IP" width="140"/>
+        <el-table-column prop="client" label="端" width="90"/>
+        <el-table-column prop="browser" label="浏览器" min-width="140"/>
+      </el-table>
+      <div class="pager"><el-pagination layout="total, prev, pager, next" :total="data.total" :page-size="q.size" :current-page="q.page + 1" @current-change="p => { q.page = p - 1; load(); }"/></div>
+    </div>`,
+  };
+
+  Object.assign(JT.Pages, { Notify, Users, Roles, LoginLogs });
 })();
