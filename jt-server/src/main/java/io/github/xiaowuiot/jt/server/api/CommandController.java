@@ -22,6 +22,9 @@ import io.github.xiaowuiot.jt.server.security.CurrentUser;
 import org.springframework.security.access.prepost.PreAuthorize;
 import io.github.xiaowuiot.jt.server.config.JtProperties;
 import io.github.xiaowuiot.jt.server.config.Roles;
+import io.github.xiaowuiot.jt.server.security.DataScope;
+import io.github.xiaowuiot.jt.server.vehicle.VehicleCache;
+import io.github.xiaowuiot.jt.server.vehicle.VehicleInfo;
 import io.github.xiaowuiot.jt.server.view.LocationView;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -77,8 +80,13 @@ public class CommandController {
     private final CommandService commands;
     private final CurrentUser current;
     private final int defaultTimeout;
+    private final DataScope scope;
+    private final VehicleCache vehicles;
 
-    public CommandController(CommandService commands, CurrentUser current, JtProperties props) {
+    public CommandController(CommandService commands, CurrentUser current, JtProperties props, DataScope scope,
+                             VehicleCache vehicles) {
+        this.scope = scope;
+        this.vehicles = vehicles;
         this.commands = commands;
         this.current = current;
         this.defaultTimeout = props.getAccess().getCommandTimeoutSeconds();
@@ -230,6 +238,15 @@ public class CommandController {
 
     private CompletableFuture<ResponseEntity<Object>> call(String deviceId, int msgId, Object body, Integer timeout,
                                                            Function<Jt808Message, Object> mapper) {
+        // 只能给自己能看到的车队里的车下发指令（不限车队的账号不受影响）
+        java.util.Set<Long> visible = scope.fleetIds();
+        if (visible != null) {
+            VehicleInfo v = vehicles.byDevice(deviceId);
+            if (v == null || !visible.contains(v.fleetId())) {
+                return CompletableFuture.completedFuture(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "只能给自己车队的车下发指令")));
+            }
+        }
         int t = timeout == null ? defaultTimeout : timeout;
         String params = body == null ? "" : String.valueOf(body);
         return commands.send(deviceId, msgId, body, t, params, current.get().getName())

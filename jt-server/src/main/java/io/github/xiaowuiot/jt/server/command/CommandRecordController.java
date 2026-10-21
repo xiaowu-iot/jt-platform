@@ -2,6 +2,8 @@ package io.github.xiaowuiot.jt.server.command;
 
 import io.github.xiaowuiot.jt.server.common.PageResult;
 import io.github.xiaowuiot.jt.server.config.Roles;
+import io.github.xiaowuiot.jt.server.security.DataScope;
+import io.github.xiaowuiot.jt.server.vehicle.VehicleCache;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -25,9 +27,13 @@ import java.util.List;
 public class CommandRecordController {
 
     private final CommandRecordRepository repo;
+    private final DataScope scope;
+    private final VehicleCache vehicles;
 
-    public CommandRecordController(CommandRecordRepository repo) {
+    public CommandRecordController(CommandRecordRepository repo, DataScope scope, VehicleCache vehicles) {
         this.repo = repo;
+        this.scope = scope;
+        this.vehicles = vehicles;
     }
 
     @GetMapping
@@ -35,8 +41,15 @@ public class CommandRecordController {
                                           @RequestParam(required = false) String plate,
                                           @RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "20") int size) {
+        // 只看自己车队的车的指令记录
+        java.util.Set<Long> visible = scope.fleetIds();
+        List<Long> ids = visible == null ? null
+                : vehicles.all().stream().filter(v -> visible.contains(v.fleetId())).map(v -> v.id()).toList();
         Specification<CommandRecord> spec = (root, q, cb) -> {
             List<Predicate> ps = new ArrayList<>();
+            if (ids != null) {
+                ps.add(ids.isEmpty() ? cb.disjunction() : root.get("vehicleId").in(ids));
+            }
             if (vehicleId != null) {
                 ps.add(cb.equal(root.get("vehicleId"), vehicleId));
             }
