@@ -61,6 +61,13 @@ public class FleetController {
         if (id.equals(f.parentId())) {
             throw ApiException.badRequest("上级车队不能是自己");
         }
+        // 不能把上级设成自己的下级，否则车队树成环
+        for (Long p = f.parentId(), n = 0L; p != null && n < 100; n++) {
+            if (p.equals(id)) {
+                throw ApiException.badRequest("上级车队不能是自己的下级车队");
+            }
+            p = fleets.findById(p).map(Fleet::getParentId).orElse(null);
+        }
         fleet.setName(f.name().trim());
         fleet.setParentId(f.parentId());
         fleet.setSort(f.sort() == null ? 0 : f.sort());

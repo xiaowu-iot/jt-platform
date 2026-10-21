@@ -28,6 +28,15 @@ public interface AlarmRepository extends JpaRepository<Alarm, Long>, JpaSpecific
     @Query("select a.startTime from Alarm a where a.startTime >= ?1")
     List<LocalDateTime> startTimesAfter(LocalDateTime from);
 
+    @Query("select a.typeName, count(a) from Alarm a where a.startTime >= ?1 and a.fleetId in ?2 group by a.typeName order by count(a) desc")
+    List<Object[]> countByType(LocalDateTime from, java.util.Collection<Long> fleetIds);
+
+    @Query("select a.level, count(a) from Alarm a where a.startTime >= ?1 and a.fleetId in ?2 group by a.level")
+    List<Object[]> countByLevel(LocalDateTime from, java.util.Collection<Long> fleetIds);
+
+    @Query("select a.startTime from Alarm a where a.startTime >= ?1 and a.fleetId in ?2")
+    List<LocalDateTime> startTimesAfter(LocalDateTime from, java.util.Collection<Long> fleetIds);
+
     @Query("select a.vehicleId, count(a) from Alarm a where a.startTime >= ?1 group by a.vehicleId order by count(a) desc")
     List<Object[]> countByVehicle(LocalDateTime from);
 }

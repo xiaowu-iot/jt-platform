@@ -209,10 +209,16 @@ public class OverviewService {
      * 最近 24 小时每小时的报警数
      */
     public List<Map<String, Object>> alarmHourly() {
+        return alarmHourly(null);
+    }
+
+    /** @param scope 只统计这些车队的报警，null 表示全部 */
+    public List<Map<String, Object>> alarmHourly(Set<Long> scope) {
         LocalDateTime end = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS).plusHours(1);
         LocalDateTime start = end.minusHours(24);
         int[] counts = new int[24];
-        for (LocalDateTime t : alarms.startTimesAfter(start)) {
+        for (LocalDateTime t : scope == null ? alarms.startTimesAfter(start)
+                : scope.isEmpty() ? List.<LocalDateTime>of() : alarms.startTimesAfter(start, scope)) {
             int idx = (int) ChronoUnit.HOURS.between(start, t);
             if (idx >= 0 && idx < 24) {
                 counts[idx]++;
@@ -229,14 +235,21 @@ public class OverviewService {
      * 今天各类报警的数量、各级别的数量
      */
     public Map<String, Object> alarmDistribution() {
+        return alarmDistribution(null);
+    }
+
+    /** @param scope 只统计这些车队的报警，null 表示全部 */
+    public Map<String, Object> alarmDistribution(Set<Long> scope) {
         LocalDateTime from = LocalDate.now().atStartOfDay();
-        List<Map<String, Object>> types = alarms.countByType(from).stream().limit(8)
+        List<Object[]> byType = scope == null ? alarms.countByType(from) : scope.isEmpty() ? List.of() : alarms.countByType(from, scope);
+        List<Object[]> byLevel = scope == null ? alarms.countByLevel(from) : scope.isEmpty() ? List.of() : alarms.countByLevel(from, scope);
+        List<Map<String, Object>> types = byType.stream().limit(8)
                 .map(r -> Map.<String, Object>of("name", r[0], "count", r[1])).toList();
         Map<String, Long> levels = new LinkedHashMap<>();
         levels.put("紧急", 0L);
         levels.put("重要", 0L);
         levels.put("一般", 0L);
-        for (Object[] r : alarms.countByLevel(from)) {
+        for (Object[] r : byLevel) {
             levels.merge(AlarmTypes.levelName(((Number) r[0]).intValue()), ((Number) r[1]).longValue(), Long::sum);
         }
         return Map.of("types", types, "levels", levels);

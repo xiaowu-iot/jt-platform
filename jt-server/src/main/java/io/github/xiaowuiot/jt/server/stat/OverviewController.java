@@ -61,8 +61,8 @@ public class OverviewController {
         m.put("byFleet", overview.byFleet(s));
         m.put("trend", overview.dailyTrend(s, 7));
         m.put("rank", overview.mileageRank(s, 10));
-        m.put("alarmHourly", overview.alarmHourly());
-        m.put("alarmDist", overview.alarmDistribution());
+        m.put("alarmHourly", overview.alarmHourly(s));
+        m.put("alarmDist", overview.alarmDistribution(s));
         m.put("access", access());
         return m;
     }
