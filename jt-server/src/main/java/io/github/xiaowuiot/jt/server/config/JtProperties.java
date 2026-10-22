@@ -38,9 +38,9 @@ public class JtProperties {
     }
 
     /**
-     * 首次启动时创建的管理员 admin 的密码
+     * 首次启动时创建的管理员 admin 的密码。留空则随机生成，写到 data/initial-admin.txt
      */
-    private String adminPassword = "admin123";
+    private String adminPassword = "";
 
     public Demo getDemo() {
         return demo;

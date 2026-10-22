@@ -92,7 +92,7 @@ java -jar jt-server/target/jt-server.jar
 
 第一次启动会生成：
 
-- 管理员 `admin`，初始密码 `admin123`（`jt.admin-password` 可以改，上线前一定要改）
+- 管理员 `admin`，初始密码随机生成，写在 `data/initial-admin.txt`（登录后尽快改密码并删除该文件；也可以用 `jt.admin-password` 指定）
 - 演示数据：几个车队、48 辆车，内置模拟终端沿深圳的真实道路跑（`jt.demo.simulator: false` 关掉）
 - 演示账号（密码 `demo123`）：`monitor` 监控员、`dispatch` 调度员、`sanitation` 环卫公司、`manager` 管理人员，登录页可以一键登录
 
@@ -153,7 +153,7 @@ java -jar jt-simulator/target/jt-simulator-exec.jar jt808 --blind-after 20 --bli
 | `jt.track.retention-months` | 6 | 轨迹保留几个月（按月分表） |
 | `jt.demo.enabled` / `simulator` | true | 演示数据、内置模拟车队 |
 | `jt.map.amap-web-key` | | 逆地理编码用的高德「Web 服务」key，不填只显示经纬度 |
-| `jt.admin-password` | admin123 | 首次启动时管理员的密码 |
+| `jt.admin-password` | （空） | 管理员初始密码；留空则随机生成，写到 `data/initial-admin.txt` |
 | `jt.data-dir` | ./data | 数据目录（H2 数据库、日志） |
 
 数据库默认 H2 文件库，换 MySQL 改 `spring.datasource`（依赖已经带了 mysql-connector-j）。

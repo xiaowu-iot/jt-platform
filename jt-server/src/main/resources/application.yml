@@ -39,7 +39,8 @@ spring:
 jt:
   # 本进程启用的角色：access 808 接入，platform Web 平台。单体模式全开
   roles: access,platform
-  admin-password: admin123
+  # 管理员 admin 的初始密码；留空则首次启动随机生成，写到 data/initial-admin.txt
+  admin-password:
   access:
     port: 7611
     # 读空闲超时（秒），一般是终端心跳间隔的 3 倍

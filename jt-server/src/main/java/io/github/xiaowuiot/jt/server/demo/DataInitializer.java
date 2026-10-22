@@ -26,6 +26,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -88,10 +93,25 @@ public class DataInitializer implements ApplicationRunner {
         // 后来加的权限点：系统管理员始终是全部权限
         grant(admin, EnumSet.allOf(Permission.class));
         if (!users.existsByUsername("admin")) {
-            User u = new User("admin", encoder.encode(props.getAdminPassword()), "系统管理员");
+            String pwd = props.getAdminPassword();
+            if (pwd == null || pwd.isBlank()) {
+                // 没配 jt.admin-password 时随机生成，写到 data 目录的文件里，不用公开的固定默认密码
+                pwd = randomPassword();
+                try {
+                    Path f = Path.of(props.getDataDir(), "initial-admin.txt");
+                    Files.createDirectories(f.toAbsolutePath().getParent());
+                    Files.writeString(f, "管理员账号：admin\n初始密码：" + pwd + "\n登录后请尽快修改密码，然后删除本文件。\n",
+                            StandardCharsets.UTF_8);
+                    log.info("已创建管理员 admin，初始密码见 {}", f.toAbsolutePath());
+                } catch (IOException e) {
+                    log.warn("写入 initial-admin.txt 失败，初始密码：{}", pwd);
+                }
+            } else {
+                log.info("已创建管理员账号 admin（密码用 jt.admin-password 配置的值）");
+            }
+            User u = new User("admin", encoder.encode(pwd), "系统管理员");
             u.setRoles(Set.of(admin));
             users.save(u);
-            log.info("已创建管理员账号 admin");
         }
         if (props.getDemo().isEnabled() && vehicles.count() == 0) {
             demo(monitor, dispatch, manager);
@@ -100,6 +120,16 @@ public class DataInitializer implements ApplicationRunner {
 
     private Role role(String name, String remark, Set<Permission> perms) {
         return roles.findByName(name).orElseGet(() -> roles.save(new Role(name, remark, true, perms)));
+    }
+
+    private static String randomPassword() {
+        String chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+        SecureRandom r = new SecureRandom();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 12; i++) {
+            sb.append(chars.charAt(r.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     private void grant(Role role, Set<Permission> perms) {
