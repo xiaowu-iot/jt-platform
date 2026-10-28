@@ -168,7 +168,7 @@ jt-server/           平台（Spring Boot 3），一个 jar 按 jt.roles 启用 
   resources/static/  管理后台（Vue 3 + Element Plus + Leaflet + ECharts），不需要构建
 ```
 
-协议层（808 编解码、切帧转义、分包、Netty 服务端）在 [iot-protocols](https://github.com/xiaowu-iot/iot-protocols)。
+协议层（808 编解码、切帧转义、分包、Netty 服务端）以内置 jar 提供（`jt-server/libs/`），无需单独构建。
 
 技术栈：Spring Boot 3.5、Netty 4.1、Spring Data JPA、Spring Security、H2；前端 Vue 3 + Element Plus + Leaflet + ECharts。
 
@@ -209,7 +209,7 @@ mvn test
   微信扫码关注公众号「小物学长」
 </p>
 
-其他开源项目：[iot-protocols](https://github.com/xiaowu-iot/iot-protocols)（JT/T 808、1078、HJ212 协议库）、[env-monitor](https://github.com/xiaowu-iot/env-monitor)（HJ212 环境监测平台）、[iot-protocol-gateway](https://github.com/xiaowu-iot/iot-protocol-gateway)（设备接入网关）、[ai-inspection](https://github.com/xiaowu-iot/ai-inspection)（AI 安全巡检）
+其他开源项目：[env-monitor](https://github.com/xiaowu-iot/env-monitor)（HJ212 环境监测平台）、[iot-protocol-gateway](https://github.com/xiaowu-iot/iot-protocol-gateway)（设备接入网关）、[ai-inspection](https://github.com/xiaowu-iot/ai-inspection)（AI 安全巡检）
 
 ## 参与贡献
 
