@@ -1,0 +1,86 @@
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 12h
+      cookie:
+        same-site: strict
+        http-only: true
+  compression:
+    enabled: true
+    mime-types: application/json,text/html,text/css,application/javascript
+
+spring:
+  application:
+    name: jt-platform
+  config:
+    # 本地配置放在 config/application.yml，不进仓库
+    import: optional:file:./config/application.yml
+  datasource:
+    # 默认 H2 文件库，零安装；生产环境在 config/application.yml 里换成 MySQL
+    url: jdbc:h2:file:./data/jt-platform;AUTO_SERVER=FALSE;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.jdbc.batch_size: 100
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Asia/Shanghai
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 60MB
+
+jt:
+  # 本进程启用的角色：access 808 接入，platform Web 平台。单体模式全开
+  roles: access,platform
+  # 管理员 admin 的初始密码；留空则首次启动随机生成，写到 data/initial-admin.txt
+  admin-password:
+  access:
+    port: 7611
+    # 读空闲超时（秒），一般是终端心跳间隔的 3 倍
+    idle-seconds: 180
+    # 指令等待终端应答的默认超时（秒）
+    command-timeout-seconds: 10
+    # 档案里没有的终端注册时自动建档（生产环境建议关掉）
+    auto-register: true
+    # 连上之后多少秒内不鉴权就断开
+    auth-timeout-seconds: 60
+    # 连接数上限（总数、单个 IP），0 不限。物联网卡专网很多车共用一个出口 IP，单 IP 上限按现场配
+    max-connections: 0
+    max-connections-per-ip: 0
+    # 分包下发（升级包等）同时在途的包数、每包等应答的超时（毫秒）
+    upload-window: 8
+    upload-ack-timeout-millis: 3000
+    # RSA 消息体加密（0x0A00 / 0x8A00），平台密钥对保存在 data-dir/jt808-rsa.key
+    rsa-enabled: false
+    rsa-encrypt-downlink: true
+  bus:
+    # 进程内上行队列的容量，满了就不给终端回应答，让终端重发
+    capacity: 100000
+  demo:
+    # 首次启动生成演示车队和车辆，并用内置模拟终端沿深圳的真实道路跑起来
+    enabled: true
+    simulator: true
+    password: demo123
+    interval: 10
+  map:
+    provider: amap
+    # 详情里显示“当前位置”用的逆地理编码。auto：配了 amap-web-key 用高德（推荐，控制台申请“Web 服务”类型的 key），
+    # 配了 tianditu-key 用天地图，都没配用 OpenStreetMap（国内网络多数连不上，连不上只显示经纬度）
+    geocoder: auto
+    amap-web-key: ${AMAP_WEB_KEY:}
+    center-lat: 22.585
+    center-lng: 114.03
+    zoom: 11
+  track:
+    retention-months: 6
+logging:
+  level:
+    io.github.xiaowuiot.jt: INFO
+    io.github.xiaowuiot.jt.simulator: WARN
